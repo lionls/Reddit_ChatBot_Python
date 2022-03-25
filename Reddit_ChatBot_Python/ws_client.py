@@ -10,8 +10,10 @@ from ._utils.consts import *
 
 class WebSockClient:
     def __init__(self, access_token, user_id, enable_trace=False, print_chat=True, log_websocket_frames=False,
-                 other_logging=True):
+                 other_logging=True,username="",password=""):
         self.user_id = user_id
+        self.username=username
+        self.password=password
 
         self.channelid_sub_pairs = {}
         self.RateLimiter = RateLimiter
@@ -44,7 +46,9 @@ class WebSockClient:
                                     on_message=self.on_message,
                                     on_error=self.on_error,
                                     on_close=self.on_close,
-                                    header={'User-Agent': USER_AGENT, 'Accept-Encoding': 'gzip'}
+                                    header={'User-Agent': USER_AGENT, 'Accept-Encoding': 'gzip'},
+                                    http_proxy_host="44.193.182.12", http_proxy_port="31112",
+                                    proxy_type="http", http_proxy_auth=(self.username, self.password))
                                     )
         return ws
 

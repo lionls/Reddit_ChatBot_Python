@@ -6,11 +6,12 @@ import abc
 
 
 class _RedditAuthBase:
-    def __init__(self, api_token=None, reddit_session=None):
+    def __init__(self, api_token=None, reddit_session=None, proxies=None):
         self.api_token = api_token
         self.sb_access_token = None
         self.user_id = None
         self._reddit_session = reddit_session
+        self.proxies = proxies
 
     @property
     def is_reauthable(self):
@@ -29,9 +30,9 @@ class _RedditAuthBase:
             'User-Agent': MOBILE_USERAGENT,
             'Authorization': f'Bearer {self.api_token}'
         }
-        sb_token_j = requests.get(f'{S_REDDIT}/api/v1/sendbird/me', headers=headers).json()
+        sb_token_j = requests.get(f'{S_REDDIT}/api/v1/sendbird/me', headers=headers, proxies=self.proxies).json()
         self.sb_access_token = sb_token_j['sb_access_token']
-        user_id_j = requests.get(f'{OAUTH_REDDIT}/api/v1/me.json', headers=headers).json()
+        user_id_j = requests.get(f'{OAUTH_REDDIT}/api/v1/me.json', headers=headers, proxies=self.proxies).json()
         self.user_id = 't2_' + user_id_j['id']
 
     def refresh_api_token(self):
@@ -47,7 +48,7 @@ class _RedditAuthBase:
             'unsafeLoggedOut': 'false',
             'safe': 'true'
         }
-        response = requests.post(f'{WWW_REDDIT}/refreshproxy', headers=headers, cookies=cookies, data=data).json()
+        response = requests.post(f'{WWW_REDDIT}/refreshproxy', headers=headers, cookies=cookies, data=data, proxies=self.proxies).json()
         self.api_token = response['accessToken']
         return self.api_token
 
@@ -80,7 +81,7 @@ class PasswordAuth(_RedditAuthBase):
             'client-vendor-id': self._client_vendor_uuid,
         }
         data = '{"scopes":["*"]}'
-        response = requests.post(f'{ACCOUNTS_REDDIT}/api/access_token', headers=headers, cookies=cookies, data=data)
+        response = requests.post(f'{ACCOUNTS_REDDIT}/api/access_token', headers=headers, cookies=cookies, data=data, proxies=self.proxies)
         return response.json()['access_token']
 
     def _do_login(self):
@@ -99,7 +100,7 @@ class PasswordAuth(_RedditAuthBase):
             'passwd': f'{self.reddit_password}:{self.twofa}' if bool(self.twofa) else self.reddit_password,
             'api_type': 'json'
         }
-        response = requests.post(f'{WWW_REDDIT}/api/login/{self.reddit_username}', headers=headers, data=data)
+        response = requests.post(f'{WWW_REDDIT}/api/login/{self.reddit_username}', headers=headers, data=data, proxies=self.proxies)
         reddit_session = response.cookies.get("reddit_session")
         return reddit_session
 
